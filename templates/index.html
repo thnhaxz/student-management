@@ -1,13 +1,16 @@
 <html>
-<head>
-<title>Student List</title>
-</head>
-
 <body>
 
 <h2>Student List</h2>
 
+<form method="get">
+<input name="search" placeholder="Search name">
+<button type="submit">Search</button>
+</form>
+
 <a href="/add">Add Student</a>
+<a href="/stats">Statistics</a>
+<a href="/export">Export CSV</a>
 
 <table border="1">
 
@@ -16,6 +19,7 @@
 <th>Name</th>
 <th>Major</th>
 <th>GPA</th>
+<th>Class</th>
 <th>Action</th>
 </tr>
 
@@ -26,6 +30,7 @@
 <td>{{s.name}}</td>
 <td>{{s.major}}</td>
 <td>{{s.gpa}}</td>
+<td>{{s.class_id}}</td>
 
 <td>
 <a href="/delete/{{s.student_id}}">Delete</a>
