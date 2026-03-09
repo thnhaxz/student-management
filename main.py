@@ -1,26 +1,39 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
-from database import engine, SessionLocal
-from models import Base, Student
+import models
+import crud
+from database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
 
-Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @app.get("/", response_class=HTMLResponse)
 def read_students(request: Request):
     db = SessionLocal()
-    students = db.query(Student).all()
-    return templates.TemplateResponse("index.html", {"request": request, "students": students})
+    students = crud.get_students(db)
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "students": students}
+    )
 
 
 @app.get("/add", response_class=HTMLResponse)
-def add_page(request: Request):
+def add_form(request: Request):
     return templates.TemplateResponse("add_student.html", {"request": request})
 
 
@@ -34,15 +47,22 @@ def add_student(
 ):
     db = SessionLocal()
 
-    student = Student(
-        student_id=student_id,
-        name=name,
-        birth_year=birth_year,
-        major=major,
-        gpa=gpa
-    )
+    student = {
+        "student_id": student_id,
+        "name": name,
+        "birth_year": birth_year,
+        "major": major,
+        "gpa": gpa
+    }
 
-    db.add(student)
-    db.commit()
+    crud.create_student(db, type("obj", (object,), student))
+
+    return RedirectResponse("/", status_code=303)
+
+
+@app.get("/delete/{student_id}")
+def delete(student_id: str):
+    db = SessionLocal()
+    crud.delete_student(db, student_id)
 
     return RedirectResponse("/", status_code=303)
